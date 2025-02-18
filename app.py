@@ -29,6 +29,8 @@ def verify_recaptcha(response_token):
     url = "https://www.google.com/recaptcha/api/siteverify"
     data = {"secret": RECAPTCHA_SECRET_KEY, "response": response_token}
     response = requests.post(url, data=data).json()
+    print("🔍 Respuesta de reCAPTCHA:", response)  # Agregar impresión para depuración
+    
     return response.get("success", False)
 
 @app.route('/send-message', methods=['POST'])
