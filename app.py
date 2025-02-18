@@ -2,7 +2,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import os
+import re # Importar el módulo de expresiones regulares
+import requests
 
+# Clave secreta reCATPCHA (Guardar como variable de entorno)
+RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY")
 app = Flask(__name__)
 CORS(app)  # Permitir solicitudes desde cualquier origen
 
@@ -16,17 +20,44 @@ app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")  # Mismo cor
 
 mail = Mail(app)
 
+def is_valid_email(email):
+    email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(email_regex, email)
+
+def verify_recaptcha(response_token):
+    """Verifica si el reCAPTCHA es válido con Google."""
+    url = "https://www.google.com/recaptcha/api/siteverify"
+    data = {"secret": RECAPTCHA_SECRET_KEY, "response": response_token}
+    response = requests.post(url, data=data).json()
+    return response.get("success", False)
+
 @app.route('/send-message', methods=['POST'])
 def send_message():
     data = request.json  # Obtener datos enviados desde el frontend
-    name = data.get('name')
-    email = data.get('email')
-    message = data.get('message')
+    recaptcha_token = data.get('recaptchaToken')
+    
+    # Validar reCAPTCHA antes de continuar
+    if not recaptcha_token or not verify_recaptcha(recaptcha_token):
+        return jsonify({"error": "reCAPTCHA inválido o no verificado"}), 400
+    
+    name = data.get('name','').strip() # Obtener el nombre y eliminar espacios al inicio y al final
+    email = data.get('email','').strip()
+    message = data.get('message','').strip()
+    
+    
+    
     
     if not name or not email or not message:
         return jsonify({"error": "Todos los campos son obligatorios"}), 400
     
-    # Aquí podrías agregar lógica para enviar un correo o almacenar los datos
+    if len(name) < 2 or len(name) > 50:
+        return jsonify({"error": "El nombre debe tener entre 2 y 50 caracteres."}), 400
+
+    if not is_valid_email(email):
+        return jsonify({"error": "El correo electrónico no es válido."}), 400
+
+    if len(message) < 10 or len(message) > 1000:
+        return jsonify({"error": "El mensaje debe tener entre 10 y 1000 caracteres."}), 400
     
     # Crear el correo
     msg = Message(
