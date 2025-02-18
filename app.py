@@ -29,8 +29,11 @@ def verify_recaptcha(response_token):
     url = "https://www.google.com/recaptcha/api/siteverify"
     data = {"secret": RECAPTCHA_SECRET_KEY, "response": response_token}
     response = requests.post(url, data=data).json()
-    print("🔍 Respuesta de reCAPTCHA:", response)  # Agregar impresión para depuración
     
+     # Guardar la respuesta en un archivo
+    with open("logs.txt", "a") as log_file:
+        log_file.write(f"\n🔍 Respuesta de reCAPTCHA: {response}\n")
+        
     return response.get("success", False)
 
 @app.route('/send-message', methods=['POST'])
@@ -75,6 +78,15 @@ def send_message():
     except Exception as e:
         print("Error al enviar el correo:",e)
         return jsonify({"error": "Hubo un problema al enviar el correo"}), 500
+    
+@app.route('/logs', methods=['GET'])
+def get_logs():
+    try:
+        with open("logs.txt", "r") as log_file:
+            return log_file.read(), 200, {'Content-Type': 'text/plain'}
+    except FileNotFoundError:
+        return "No hay logs aún.", 404
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))  # Usar el puerto asignado por Render
