@@ -38,23 +38,24 @@ def verify_recaptcha(response_token):
 
 @app.route('/send-message', methods=['POST'])
 def send_message():
-    data = request.json  # Obtener datos enviados desde el frontend
+    data = request.json  # Obtener los datos enviados desde el frontend
+    print("📩 Datos recibidos en backend:", data)  # 👈 Imprimir datos en logs
+
     recaptcha_token = data.get('recaptchaToken')
-    
+
     # Validar reCAPTCHA antes de continuar
     if not recaptcha_token or not verify_recaptcha(recaptcha_token):
         return jsonify({"error": "reCAPTCHA inválido o no verificado"}), 400
     
-    name = data.get('name','').strip() # Obtener el nombre y eliminar espacios al inicio y al final
-    email = data.get('email','').strip()
-    message = data.get('message','').strip()
-    
-    
-    
-    
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    message = data.get('message', '').strip()
+
+    print(f"🔎 Validando datos - Nombre: {name}, Email: {email}, Mensaje: {message}")
+
     if not name or not email or not message:
         return jsonify({"error": "Todos los campos son obligatorios"}), 400
-    
+
     if len(name) < 2 or len(name) > 50:
         return jsonify({"error": "El nombre debe tener entre 2 y 50 caracteres."}), 400
 
@@ -63,22 +64,22 @@ def send_message():
 
     if len(message) < 10 or len(message) > 1000:
         return jsonify({"error": "El mensaje debe tener entre 10 y 1000 caracteres."}), 400
-    
+
     # Crear el correo
     msg = Message(
         subject=f"Nuevo mensaje de {name}",
-        sender=email, # Quien envia el mensaje
-        recipients=[os.environ.get("MAIL_USERNAME")],  # Quien recibe el mensaje
+        sender=email,
+        recipients=[os.environ.get("MAIL_USERNAME")],
         body=f"Nombre: {name}\nCorreo: {email}\nMensaje: {message}"
     )
-    
+
     try: 
-        mail.send(msg)  # Enviar el correo
+        mail.send(msg)
         return jsonify({"success": "Correo enviado correctamente"}), 200
     except Exception as e:
-        print("Error al enviar el correo:",e)
+        print("Error al enviar el correo:", e)
         return jsonify({"error": "Hubo un problema al enviar el correo"}), 500
-    
+
 @app.route('/logs', methods=['GET'])
 def get_logs():
     try:
