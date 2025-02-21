@@ -4,12 +4,14 @@ from flask_mail import Mail, Message
 import os
 import re # Importar el módulo de expresiones regulares
 import requests
-from routes_calendario import calendario_bp
+from routes_calendario import calendario_bp, init_db
 
 # Clave secreta reCATPCHA (Guardar como variable de entorno)
 
 app = Flask(__name__)
 CORS(app)  # Permitir solicitudes desde cualquier origen
+
+init_db()
 
 # Registrar el Blueprint de calendario
 app.register_blueprint(calendario_bp)
