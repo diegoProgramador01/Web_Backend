@@ -4,11 +4,15 @@ from flask_mail import Mail, Message
 import os
 import re # Importar el módulo de expresiones regulares
 import requests
+from routes_calendario import calendario_bp
 
 # Clave secreta reCATPCHA (Guardar como variable de entorno)
 
 app = Flask(__name__)
 CORS(app)  # Permitir solicitudes desde cualquier origen
+
+# Registrar el Blueprint de calendario
+app.register_blueprint(calendario_bp)
 
 # Configuración del servidor de correo (Usaremos Gmail como ejemplo)
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
